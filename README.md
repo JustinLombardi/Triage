@@ -4,6 +4,30 @@ Diagnoses failed GitHub Actions checks: classifies a failure as a flaky test,
 an infrastructure problem, a real bug, or a config/dependency issue, and
 explains what happened in plain English.
 
+**Stack:** FastAPI · React (Vite) · PostgreSQL · Redis/RQ · Docker Compose ·
+Claude API · GitHub API
+
+## Highlights
+
+- **Two ways in:** paste a log in the web UI, or let a GitHub webhook trigger a
+  diagnosis automatically for every failed job in a workflow run.
+- **Asynchronous by design:** the API only records the request and queues it
+  in Redis. A separate RQ worker fetches the log, runs the analysis, and
+  writes the result to Postgres, so a slow LLM call never blocks the API.
+- **Heuristics plus LLM:** a regex pre-scan (about 40 patterns across the four
+  categories) gives Claude hints. If the model call fails or returns
+  unparseable output, the pre-scan result is used instead, so no diagnosis is
+  left stuck.
+- **Structured, checkable output:** each diagnosis has a category, a 0–100
+  confidence score, a root cause, a concrete next step, and evidence lines
+  quoted verbatim from the log.
+- **Webhook security:** GitHub deliveries are verified with HMAC-SHA256
+  signatures before anything is queued.
+
+**Status:** working prototype. In progress: turning the single-repo webhook
+integration into an installable GitHub App for multi-repo and org use (see
+"Known simplifications" below).
+
 ## Architecture
 
 ```
